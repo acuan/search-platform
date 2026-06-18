@@ -14,6 +14,11 @@ class GlobalField extends Model
         'visible'
     ];
 
+    protected $casts = [
+        'searchable' => 'boolean',
+        'visible' => 'boolean',
+    ];
+
     public function mappings()
     {
         return $this->hasMany(SourceFieldMapping::class);

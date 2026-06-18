@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 class Source extends Model
 {
@@ -11,15 +12,19 @@ class Source extends Model
         'code',
         'description',
         'source_type',
-        'active'
+        'is_active'
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
     ];
 
     public function connection()
     {
-        return $this->hasOne(SourceConnection::class);
+        return $this->hasMany(SourceConnection::class);
     }
 
-    public function mappings()
+    public function fieldMappings()
     {
         return $this->hasMany(SourceFieldMapping::class);
     }
@@ -37,6 +42,52 @@ class Source extends Model
     public function searchIndexes()
     {
         return $this->hasMany(SearchIndex::class);
+    }
+
+    public function searchRecords()
+    {
+        return $this->hasMany(SearchRecord::class);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scopes
+    |--------------------------------------------------------------------------
+    */
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Helpers
+    |--------------------------------------------------------------------------
+    */
+
+    public function getActiveConnectionAttribute(): ?SourceConnection
+    {
+        return $this->connections()
+            ->where('is_active', true)
+            ->first();
+    }
+
+    public function connections()
+    {
+        return $this->hasMany(
+            SourceConnection::class
+        );
+    }
+
+    public function activeConnection()
+    {
+        return $this->hasOne(
+            SourceConnection::class
+        )->where(
+            'is_active',
+            true
+        );
     }
 
 

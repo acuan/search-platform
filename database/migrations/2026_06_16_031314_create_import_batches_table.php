@@ -14,26 +14,16 @@ return new class extends Migration
         Schema::create('import_batches', function (Blueprint $table) {
 
             $table->id();
-
-            $table->foreignId('import_id')
-                ->constrained()
-                ->cascadeOnDelete();
-
-            $table->integer('batch_number');
-
-            $table->bigInteger('records_count');
-
-            $table->bigInteger('processed_count')
-                ->default(0);
-
+            $table->integer('chunk_number');
+            $table->bigInteger('offset');
+            $table->bigInteger('limit');
             $table->enum('status', [
                 'pending',
                 'processing',
                 'completed',
                 'failed'
-            ])->default('pending');
-
-            $table->timestamps();
+            ]);
+            $table->text('error_message')->nullable();
         });
     }
 

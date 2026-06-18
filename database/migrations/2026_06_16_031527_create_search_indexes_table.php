@@ -25,6 +25,14 @@ return new class extends Migration
 
             $table->timestamp('last_sync_at')
                 ->nullable();
+            $table->enum('status', [
+                'pending',
+                'indexing',
+                'completed',
+                'failed'
+            ]);
+
+            $table->text('last_error')->nullable();
 
             $table->timestamps();
         });

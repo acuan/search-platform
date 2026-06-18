@@ -11,35 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('source_connections', function (Blueprint $table) {
+        Schema::create('source_objects', function (Blueprint $table) {
 
             $table->id();
-
             $table->foreignId('source_id')
                 ->constrained()
                 ->cascadeOnDelete();
-
-            $table->string('name')
-                ->nullable();
-
-            $table->json('config');
-
+            $table->string('object_name');
+            $table->string('object_type')
+                ->default('table');
             $table->boolean('is_active')
                 ->default(true);
-
-            $table->timestamp('last_tested_at')
-                ->nullable();
-
-            $table->boolean('last_test_success')
-                ->nullable();
-
-            $table->text('last_test_message')
-                ->nullable();
-
             $table->timestamps();
-
-            $table->index('source_id');
-            $table->index('is_active');
         });
     }
 
@@ -48,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('souce_connections');
+        Schema::dropIfExists('source_objects');
     }
 };

@@ -20,7 +20,7 @@
             class="p-6">
 
             @csrf
-
+            @method('PUT')
             @include('sources._form')
 
             <div class="mt-8 flex gap-3">

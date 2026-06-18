@@ -1,8 +1,7 @@
-<aside
-    class="w-72 bg-slate-900 text-white flex flex-col">
+<aside class="w-64 bg-slate-900 text-white min-h-screen">
 
-    <div
-        class="h-16 flex items-center px-6 border-b border-slate-800">
+    {{-- Logo --}}
+    <div class="h-16 flex items-center px-6 border-b border-slate-800">
 
         <h1 class="text-xl font-bold">
             Search Platform
@@ -10,233 +9,138 @@
 
     </div>
 
-    <nav class="flex-1 overflow-y-auto p-4">
+    {{-- Navegación --}}
+    <nav class="p-4 space-y-1">
 
         {{-- Dashboard --}}
-
         <a
             href="{{ route('dashboard') }}"
-            class="flex items-center px-4 py-3 rounded-lg hover:bg-slate-800">
+            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition">
 
-            Dashboard
+            <span>📊</span>
+
+            <span>Dashboard</span>
 
         </a>
 
-        {{-- FUENTES --}}
+        {{-- Fuentes --}}
+        <a
+            href="{{ route('sources.index') }}"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition">
 
-        <div class="mt-6">
+            <span>🗄️</span>
 
-            <h3
-                class="px-4 mb-2 text-xs uppercase tracking-wider text-slate-400">
+            <span>Fuentes</span>
 
-                Fuentes de Datos
+        </a>
 
-            </h3>
+        {{-- Importaciones --}}
+        <a
+            href="{{ route('imports.index') }}"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition">
 
-            <div class="space-y-1">
+            <span>📥</span>
 
-                <a
-                    href="{{ route('sources.index') }}"
-                    class="block px-4 py-2 rounded hover:bg-slate-800">
-                     {{ request()->routeIs('sources.*')
-                        ? 'bg-slate-800 text-white'
-                        : 'hover:bg-slate-800' }}">
-                    Fuentes
+            <span>Importaciones</span>
 
-                </a>
+        </a>
 
-                <a
-                    href="#"
-                    class="block px-4 py-2 rounded hover:bg-slate-800">
+        {{-- Búsquedas --}}
+        <a
+            href="{{ route('search.index') }}"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition">
 
-                    Conexiones
+            <span>🔎</span>
 
-                </a>
+            <span>Buscador</span>
 
-                <a
-                    href="#"
-                    class="block px-4 py-2 rounded hover:bg-slate-800">
+        </a>
 
-                    Mapeo de Campos
+        {{-- Historial --}}
+        <a
+            href="{{ route('search-logs.index') }}"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition">
 
-                </a>
+            <span>📜</span>
 
-                <a
-                    href="#"
-                    class="block px-4 py-2 rounded hover:bg-slate-800">
+            <span>Historial</span>
 
-                    Índices
+        </a>
 
-                </a>
+        {{-- Búsquedas Guardadas --}}
+        <a
+            href="{{ route('saved-searches.index') }}"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition">
 
-            </div>
+            <span>⭐</span>
 
-        </div>
+            <span>Búsquedas Guardadas</span>
 
-        {{-- IMPORTACIONES --}}
+        </a>
 
-        <div class="mt-6">
+        <div class="border-t border-slate-800 my-4"></div>
 
-            <h3
-                class="px-4 mb-2 text-xs uppercase tracking-wider text-slate-400">
+        {{-- Administración --}}
+        <div class="px-4 py-2 text-xs uppercase tracking-wider text-slate-400">
 
-                Importaciones
-
-            </h3>
-
-            <div class="space-y-1">
-
-                <a
-                    href="#"
-                    class="block px-4 py-2 rounded hover:bg-slate-800">
-
-                    Importaciones
-
-                </a>
-
-                <a
-                    href="#"
-                    class="block px-4 py-2 rounded hover:bg-slate-800">
-
-                    Lotes
-
-                </a>
-
-                <a
-                    href="#"
-                    class="block px-4 py-2 rounded hover:bg-slate-800">
-
-                    Programadas
-
-                </a>
-
-            </div>
+            Administración
 
         </div>
 
-        {{-- BUSQUEDAS --}}
+        {{-- Usuarios --}}
+        <a
+            href="{{ route('users.index') }}"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition">
 
-        <div class="mt-6">
+            <span>👥</span>
 
-            <h3
-                class="px-4 mb-2 text-xs uppercase tracking-wider text-slate-400">
+            <span>Usuarios</span>
 
-                Búsquedas
+        </a>
 
-            </h3>
+        {{-- Roles --}}
+        <a
+            href="{{ route('roles.index') }}"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition">
 
-            <div class="space-y-1">
+            <span>🛡️</span>
 
-                <a
-                    href="#"
-                    class="block px-4 py-2 rounded hover:bg-slate-800">
+            <span>Roles</span>
 
-                    Buscar
+        </a>
 
-                </a>
+        {{-- Permisos --}}
+        <a
+            href="{{ route('permissions.index') }}"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition">
 
-                <a
-                    href="#"
-                    class="block px-4 py-2 rounded hover:bg-slate-800">
+            <span>🔐</span>
 
-                    Historial
+            <span>Permisos</span>
 
-                </a>
-
-                <a
-                    href="#"
-                    class="block px-4 py-2 rounded hover:bg-slate-800">
-
-                    Guardadas
-
-                </a>
-
-            </div>
-
-        </div>
-
-        {{-- ADMINISTRACION --}}
-
-        <div class="mt-6">
-
-            <h3
-                class="px-4 mb-2 text-xs uppercase tracking-wider text-slate-400">
-
-                Administración
-
-            </h3>
-
-            <div class="space-y-1">
-
-                <a
-                    href="#"
-                    class="block px-4 py-2 rounded hover:bg-slate-800">
-
-                    Usuarios
-
-                </a>
-
-                <a
-                    href="#"
-                    class="block px-4 py-2 rounded hover:bg-slate-800">
-
-                    Roles
-
-                </a>
-
-                <a
-                    href="#"
-                    class="block px-4 py-2 rounded hover:bg-slate-800">
-
-                    Permisos
-
-                </a>
-
-            </div>
-
-        </div>
-
-        {{-- SISTEMA --}}
-
-        <div class="mt-6">
-
-            <h3
-                class="px-4 mb-2 text-xs uppercase tracking-wider text-slate-400">
-
-                Sistema
-
-            </h3>
-
-            <div class="space-y-1">
-
-                <a
-                    href="#"
-                    class="block px-4 py-2 rounded hover:bg-slate-800">
-
-                    Configuración
-
-                </a>
-
-                <a
-                    href="#"
-                    class="block px-4 py-2 rounded hover:bg-slate-800">
-
-                    Logs
-
-                </a>
-
-                <a
-                    href="#"
-                    class="block px-4 py-2 rounded hover:bg-slate-800">
-
-                    Estado
-
-                </a>
-
-            </div>
-
-        </div>
+        </a>
 
     </nav>
+
+    {{-- Usuario --}}
+    <div class="absolute bottom-0 w-64 border-t border-slate-800 p-4">
+
+        <div class="text-sm text-slate-400">
+            Conectado como
+        </div>
+
+        <div class="absolute bottom-0 w-64 border-t border-slate-800 p-4">
+
+    <div class="text-sm text-slate-400">
+        Sistema
+    </div>
+
+    <div class="font-medium">
+        Administrador
+    </div>
+
+</div>
+
+    </div>
 
 </aside>

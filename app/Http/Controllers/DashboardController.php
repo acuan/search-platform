@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Source;
 use App\Models\Import;
 use App\Models\SearchLog;
+use App\Models\Source;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -21,12 +22,25 @@ class DashboardController extends Controller
 
             'usersCount' => User::count(),
 
+            'activeSourcesCount' => Source::where(
+                'is_active',
+                true
+            )->count(),
+
+            'completedImportsCount' => Import::where(
+                'status',
+                'completed'
+            )->count(),
+
             'recentSources' => Source::latest()
-                ->take(5)
+                ->take(10)
                 ->get(),
 
-            'recentImports' => Import::latest()
-                ->take(5)
+            'sourcesByType' => Source::select(
+                    'source_type',
+                    DB::raw('count(*) as total')
+                )
+                ->groupBy('source_type')
                 ->get(),
 
             'recentSearches' => SearchLog::latest()

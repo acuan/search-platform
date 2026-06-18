@@ -16,29 +16,32 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('source_id')
-                ->constrained();
-
-            $table->foreignId('user_id')
-                ->constrained();
-
+                ->constrained()
+                ->cascadeOnDelete();
             $table->string('filename');
-
-            $table->bigInteger('records_total')
+            $table->string('storage_path');
+            $table->unsignedBigInteger('file_size')
                 ->default(0);
-
-            $table->bigInteger('records_processed')
-                ->default(0);
-
-            $table->bigInteger('records_failed')
-                ->default(0);
-
             $table->enum('status', [
                 'pending',
                 'processing',
                 'completed',
                 'failed'
             ])->default('pending');
-
+            $table->unsignedBigInteger('total_chunks')
+                ->default(0);
+            $table->unsignedBigInteger('processed_chunks')
+                ->default(0);
+            $table->unsignedBigInteger('records_total')
+                ->default(0);
+            $table->unsignedBigInteger('records_processed')
+                ->default(0);
+            $table->text('error_message')
+                ->nullable();
+            $table->timestamp('started_at')
+                ->nullable();
+            $table->timestamp('completed_at')
+                ->nullable();
             $table->timestamps();
         });
     }
@@ -48,6 +51,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('import');
+        Schema::dropIfExists('imports');
     }
 };

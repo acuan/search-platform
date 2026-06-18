@@ -2,22 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Source;
-use App\Services\SourceConnectionService;
-
-
+use Illuminate\Http\Request;
 
 class SourceController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $sources = Source::paginate();
+        $sources = Source::latest()->paginate(20);
 
-        return view('sources.index', compact('sources'));
+        return view(
+            'sources.index',
+            compact('sources')
+        );
     }
 
     public function create()
@@ -27,86 +24,73 @@ class SourceController extends Controller
 
     public function store(Request $request)
     {
-        Source::create(
+        $data = $request->validate([
+            'name' => ['required'],
+            'code' => ['required','unique:sources'],
+            'description' => ['nullable'],
+            'source_type' => ['required'],
+            'is_active' => ['boolean']
+        ]);
+
+        $source = Source::create($data);
+
+        return redirect()
+            ->route(
+                'sources.connection.edit',
+                $source
+            )
+            ->with(
+                'success',
+                'Fuente creada correctamente'
+            );
+    }
+
+    public function edit(Source $source)
+    {
+        return view(
+            'sources.edit',
+            compact('source')
+        );
+    }
+
+    public function show(Source $source)
+    {
+        $source->load([
+            'connections',
+            'fieldMappings.globalField',
+            'imports'
+        ]);
+
+        return view(
+            'sources.show',
+            compact('source')
+        );
+    }
+
+    public function update(
+        Request $request,
+        Source $source
+    ) {
+        $source->update(
             $request->validate([
-                'name' => 'required',
-                'code' => 'required|unique:sources',
-                'description' => 'nullable',
-                'source_type' => 'required',
-                'active' => 'boolean'
+                'name' => ['required'],
+                'description' => ['nullable'],
+                'is_active' => ['boolean']
             ])
         );
 
-        return redirect()->route('sources.index');
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
-
-    public function test(Source $source)
-    {
-        try {
-
-            app(SourceConnectionService::class)
-                ->connect($source)
-                ->getPdo();
-
-            return back()->with(
+        return back()
+            ->with(
                 'success',
-                'Conexión exitosa'
+                'Fuente actualizada'
             );
-
-        } catch (\Exception $e) {
-
-            return back()->with(
-                'error',
-                $e->getMessage()
-            );
-        }
     }
 
-    public function columns(Source $source)
+    public function destroy(Source $source)
     {
-        $db = app(SourceConnectionService::class)
-            ->connect($source);
+        $source->delete();
 
-        $columns = $db->select("
-            SELECT column_name
-            FROM information_schema.columns
-            WHERE table_name = ?
-        ", [
-            $source->connection->table_name
-        ]);
-
-        return $columns;
+        return redirect()
+            ->route('sources.index');
     }
 }

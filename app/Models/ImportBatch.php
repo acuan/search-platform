@@ -18,4 +18,5 @@ class ImportBatch extends Model
     {
         return $this->belongsTo(Import::class);
     }
+
 }

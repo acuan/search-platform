@@ -2,44 +2,22 @@
 
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Controllers
-|--------------------------------------------------------------------------
-*/
-
 use App\Http\Controllers\DashboardController;
-
 use App\Http\Controllers\SourceController;
 use App\Http\Controllers\SourceConnectionController;
 use App\Http\Controllers\SourceFieldMappingController;
-
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\ImportBatchController;
-
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SearchLogController;
 use App\Http\Controllers\SavedSearchController;
-
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 
-/*
-|--------------------------------------------------------------------------
-| Home
-|--------------------------------------------------------------------------
-*/
-
 Route::redirect('/', '/dashboard');
 
-/*
-|--------------------------------------------------------------------------
-| Auth Protected Routes
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware([''])->group(function () {
+Route::middleware([])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
@@ -58,41 +36,61 @@ Route::middleware([''])->group(function () {
 
     Route::resource('sources', SourceController::class);
 
+    Route::prefix('sources/{source}')
+        ->name('sources.')
+        ->group(function () {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Connection
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                '/connection',
+                [SourceConnectionController::class, 'edit']
+            )->name('connection.edit');
+
+            Route::post(
+                '/connection',
+                [SourceConnectionController::class, 'update']
+            )->name('connection.update');
+
+            Route::post(
+                '/test-connection',
+                [SourceConnectionController::class, 'test']
+            )->name('test-connection');
+
+            Route::post(
+                '/detect-tables',
+                [SourceConnectionController::class, 'detectTables']
+            )->name('detect-tables');
+
+            Route::post(
+                '/detect-fields',
+                [SourceConnectionController::class, 'detectFields']
+            )->name('detect-fields');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Field Mapping
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                '/mappings',
+                [SourceFieldMappingController::class, 'index']
+            )->name('mappings.index');
+
+            Route::post(
+                '/mappings',
+                [SourceFieldMappingController::class, 'store']
+            )->name('mappings.store');
+        });
+
     /*
     |--------------------------------------------------------------------------
-    | Source Connections
-    |--------------------------------------------------------------------------
-    */
-
-    Route::resource(
-        'source-connections',
-        SourceConnectionController::class
-    );
-
-    Route::post(
-        'source-connections/{sourceConnection}/test',
-        [SourceConnectionController::class, 'test']
-    )->name('source-connections.test');
-
-    /*
-    |--------------------------------------------------------------------------
-    | Source Field Mappings
-    |--------------------------------------------------------------------------
-    */
-
-    Route::get(
-        'sources/{source}/mappings',
-        [SourceFieldMappingController::class, 'index']
-    )->name('sources.mappings.index');
-
-    Route::post(
-        'sources/{source}/mappings',
-        [SourceFieldMappingController::class, 'store']
-    )->name('sources.mappings.store');
-
-    /*
-    |--------------------------------------------------------------------------
-    | Importaciones
+    | Imports
     |--------------------------------------------------------------------------
     */
 
@@ -111,7 +109,7 @@ Route::middleware([''])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Buscador
+    | Search
     |--------------------------------------------------------------------------
     */
 
@@ -127,7 +125,7 @@ Route::middleware([''])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Historial
+    | Search Logs
     |--------------------------------------------------------------------------
     */
 
@@ -152,7 +150,7 @@ Route::middleware([''])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Administración
+    | Administration
     |--------------------------------------------------------------------------
     */
 
@@ -171,5 +169,5 @@ Route::middleware([''])->group(function () {
         PermissionController::class
     );
 
-});
 
+});

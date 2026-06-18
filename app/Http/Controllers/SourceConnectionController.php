@@ -4,105 +4,228 @@ namespace App\Http\Controllers;
 
 use App\Models\Source;
 use App\Models\SourceConnection;
+use App\Services\SourceService;
 use Illuminate\Http\Request;
 
 class SourceConnectionController extends Controller
 {
-    public function index()
+    public function edit(Source $source)
     {
-        $connections = SourceConnection::with('source')
-            ->paginate(20);
+        $connection = $source
+            ->connections()
+            ->first();
 
         return view(
-            'source-connections.index',
-            compact('connections')
-        );
-    }
-
-    public function create()
-    {
-        $sources = Source::orderBy('name')->get();
-
-        return view(
-            'source-connections.create',
-            compact('sources')
-        );
-    }
-
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'source_id' => 'required',
-            'host' => 'nullable',
-            'port' => 'nullable',
-            'database' => 'nullable',
-            'schema' => 'nullable',
-            'username' => 'nullable',
-            'password' => 'nullable',
-            'table_name' => 'nullable',
-            'file_path' => 'nullable',
-        ]);
-
-        SourceConnection::create($data);
-
-        return redirect()
-            ->route('source-connections.index')
-            ->with(
-                'success',
-                'Conexión creada correctamente'
-            );
-    }
-
-    public function edit(SourceConnection $sourceConnection)
-    {
-        $sources = Source::orderBy('name')->get();
-
-        return view(
-            'source-connections.edit',
+            'sources.connection',
             compact(
-                'sourceConnection',
-                'sources'
+                'source',
+                'connection'
             )
         );
     }
 
+
     public function update(
         Request $request,
-        SourceConnection $sourceConnection
-    )
-    {
-        $data = $request->validate([
-            'source_id' => 'required',
-            'host' => 'nullable',
-            'port' => 'nullable',
-            'database' => 'nullable',
-            'schema' => 'nullable',
-            'username' => 'nullable',
-            'password' => 'nullable',
-            'table_name' => 'nullable',
-            'file_path' => 'nullable',
-        ]);
+        Source $source
+    ) {
 
-        $sourceConnection->update($data);
+        $connection = $source
+            ->connections()
+            ->first();
+
+        $existingConfig = $connection?->config ?? [];
+
+        /*
+        |--------------------------------------------------------------------------
+        | Archivos
+        |--------------------------------------------------------------------------
+        */
+
+        $csvPath = $existingConfig['file_path'] ?? null;
+
+        if ($request->hasFile('csv_file')) {
+
+            $csvPath = $request
+                ->file('csv_file')
+                ->store(
+                    'imports/csv',
+                    'local'
+                );
+        }
+
+        $excelPath = $existingConfig['file_path'] ?? null;
+
+        if ($request->hasFile('excel_file')) {
+
+            $excelPath = $request
+                ->file('excel_file')
+                ->store(
+                    'imports/excel',
+                    'local'
+                );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Configuración por tipo
+        |--------------------------------------------------------------------------
+        */
+
+        $config = match ($source->source_type) {
+
+            'postgresql' => [
+
+                'host' => $request->host,
+
+                'port' => $request->port ?: 5432,
+
+                'database' => $request->database,
+
+                'username' => $request->username,
+
+                'password' => filled($request->password)
+                    ? encrypt($request->password)
+                    : ($existingConfig['password'] ?? null),
+
+                'schema' => $request->schema ?: 'public',
+
+                'table' => $request->table,
+            ],
+
+            'mysql' => [
+
+                'host' => $request->host,
+
+                'port' => $request->port ?: 3306,
+
+                'database' => $request->database,
+
+                'username' => $request->username,
+
+                'password' => filled($request->password)
+                    ? encrypt($request->password)
+                    : ($existingConfig['password'] ?? null),
+
+                'table' => $request->table,
+            ],
+
+            'csv' => [
+
+                'file_path' => $csvPath,
+
+                'delimiter' => $request->delimiter ?: ',',
+
+                'header_row' => true,
+            ],
+
+            'excel' => [
+
+                'file_path' => $excelPath,
+
+                'sheet' => $request->sheet ?: 'Sheet1',
+            ],
+
+            default => [],
+        };
+
+        /*
+        |--------------------------------------------------------------------------
+        | Guardar
+        |--------------------------------------------------------------------------
+        */
+
+        SourceConnection::updateOrCreate(
+
+            [
+                'source_id' => $source->id,
+            ],
+
+            [
+                'name' => 'Principal',
+
+                'config' => $config,
+
+                'is_active' => true,
+            ]
+        );
 
         return redirect()
-            ->route('source-connections.index')
+            ->route(
+                'sources.connection.edit',
+                $source
+            )
             ->with(
                 'success',
-                'Conexión actualizada'
+                'Conexión guardada correctamente'
             );
     }
 
-    public function destroy(
-        SourceConnection $sourceConnection
-    )
-    {
-        $sourceConnection->delete();
+    public function test(
+        Source $source,
+        SourceService $service
+    ) {
 
-        return back()
-            ->with(
-                'success',
-                'Conexión eliminada'
-            );
+        try {
+
+            $result = $service
+                ->testConnection($source);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Conexión exitosa'
+            ]);
+
+        } catch (\Throwable $e) {
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ],500);
+        }
+    }
+
+    public function detectTables(
+        Source $source,
+        SourceService $service
+    ) {
+
+        try {
+
+            return response()->json([
+                'success' => true,
+                'tables' => $service
+                    ->getTables($source)
+            ]);
+
+        } catch (\Throwable $e) {
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ],500);
+        }
+    }
+
+    public function detectFields(
+        Source $source,
+        SourceService $service
+    ) {
+
+        try {
+
+            return response()->json([
+                'success' => true,
+                'fields' => $service
+                    ->getFields($source)
+            ]);
+
+        } catch (\Throwable $e) {
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ],500);
+        }
     }
 }

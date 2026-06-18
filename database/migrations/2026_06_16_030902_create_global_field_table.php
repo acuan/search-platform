@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('global_fields', function (Blueprint $table) {
 
             $table->id();
-            $table->string('name')->unique();
+            $table->string('code')->unique();
             $table->string('label');
             $table->enum('data_type', [
                 'string',
