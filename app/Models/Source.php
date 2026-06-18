@@ -90,5 +90,14 @@ class Source extends Model
         );
     }
 
+    public function detectedFields()
+    {
+        return $this->hasMany(
+            SourceDetectedField::class
+        );
+    }
+
+
+
 
 }

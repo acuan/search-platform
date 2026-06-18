@@ -7,20 +7,29 @@ use Illuminate\Database\Eloquent\Model;
 class GlobalField extends Model
 {
     protected $fillable = [
+
+        'code',
+
         'name',
-        'label',
+
         'data_type',
-        'searchable',
-        'visible'
+
+        'is_searchable',
+
+        'is_filterable'
     ];
 
     protected $casts = [
-        'searchable' => 'boolean',
-        'visible' => 'boolean',
+
+        'is_searchable' => 'boolean',
+
+        'is_filterable' => 'boolean',
     ];
 
     public function mappings()
     {
-        return $this->hasMany(SourceFieldMapping::class);
+        return $this->hasMany(
+            SourceFieldMapping::class
+        );
     }
 }

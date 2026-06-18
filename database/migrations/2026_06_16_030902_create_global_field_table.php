@@ -6,37 +6,34 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('global_fields', function (Blueprint $table) {
 
             $table->id();
-            $table->string('code')->unique();
-            $table->string('label');
-            $table->enum('data_type', [
-                'string',
-                'integer',
-                'decimal',
-                'date',
-                'datetime',
-                'boolean',
-                'text'
-            ]);
 
-            $table->boolean('searchable')->default(true);
-            $table->boolean('visible')->default(true);
+            $table->string('code')
+                ->unique();
+
+            $table->string('name');
+
+            $table->string('data_type')
+                ->default('string');
+
+            $table->boolean('is_searchable')
+                ->default(true);
+
+            $table->boolean('is_filterable')
+                ->default(false);
+
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('global_field');
+        Schema::dropIfExists(
+            'global_fields'
+        );
     }
 };

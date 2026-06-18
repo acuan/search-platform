@@ -4,28 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class SourceFieldMapping extends Model
+class SourceDetectedField extends Model
 {
     protected $fillable = [
 
         'source_id',
 
-        'global_field_id',
+        'field_name',
 
-        'source_field'
+        'data_type',
     ];
 
     public function source()
     {
         return $this->belongsTo(
             Source::class
-        );
-    }
-
-    public function globalField()
-    {
-        return $this->belongsTo(
-            GlobalField::class
         );
     }
 }

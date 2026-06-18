@@ -84,7 +84,7 @@ class ImportController extends Controller
         ]);
 
         ProcessImportJob::dispatch(
-            $import
+            $import->id
         );
 
         return redirect()

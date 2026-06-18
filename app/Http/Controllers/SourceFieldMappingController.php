@@ -2,63 +2,84 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Source;
+use App\Models\GlobalField;
+use App\Models\SourceFieldMapping;
 use Illuminate\Http\Request;
 
 class SourceFieldMappingController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+    public function index(
+        Source $source
+    ) {
+
+        $fields =
+            $source
+                ->detectedFields()
+                ->orderBy('field_name')
+                ->get();
+
+        $globalFields =
+            GlobalField::orderBy(
+                'name'
+            )->get();
+
+        $existingMappings =
+            $source
+                ->fieldMappings()
+                ->pluck(
+                    'global_field_id',
+                    'source_field'
+                )
+                ->toArray();
+
+        return view(
+            'sources.mappings.index',
+            compact(
+                'source',
+                'fields',
+                'globalFields',
+                'existingMappings'
+            )
+        );
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
+    public function store(
+        Request $request,
+        Source $source
+    ) {
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+        SourceFieldMapping::where(
+            'source_id',
+            $source->id
+        )->delete();
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
+        foreach (
+            $request->mappings ?? []
+            as $sourceField =>
+            $globalFieldId
+        ) {
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
+            if (!$globalFieldId) {
+                continue;
+            }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
+            SourceFieldMapping::create([
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+                'source_id' =>
+                    $source->id,
+
+                'source_field' =>
+                    $sourceField,
+
+                'global_field_id' =>
+                    $globalFieldId,
+            ]);
+        }
+
+        return back()->with(
+            'success',
+            'Mapeos guardados correctamente'
+        );
     }
 }

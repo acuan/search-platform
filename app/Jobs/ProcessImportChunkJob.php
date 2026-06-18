@@ -3,12 +3,25 @@
 namespace App\Jobs;
 
 use App\Models\Import;
+use App\Services\FieldMappingService;
+use App\Services\SearchIndexerService;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 class ProcessImportChunkJob implements ShouldQueue
 {
+    use Dispatchable;
+    use InteractsWithQueue;
     use Queueable;
+    use SerializesModels;
+
+    public int $timeout = 1200;
+
+    public int $tries = 3;
 
     public function __construct(
         public int $importId,
@@ -17,25 +30,66 @@ class ProcessImportChunkJob implements ShouldQueue
     ) {
     }
 
-    public function handle(): void
-    {
-        $import = Import::findOrFail(
+    public function handle(
+        SearchIndexerService $indexer,
+        FieldMappingService $mappingService
+    ): void {
+
+        $import = Import::with([
+            'source',
+            'source.fieldMappings.globalField'
+        ])->findOrFail(
             $this->importId
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | Aquí irá OpenSearch
-        |--------------------------------------------------------------------------
-        */
+        $documents = [];
 
         foreach ($this->rows as $row) {
 
-            /*
-            SearchRecord::create(...)
-            */
+            $normalized =
+                $mappingService
+                    ->normalize(
+                        $import->source,
+                        $row
+                    );
 
+            $fullText =
+                $mappingService
+                    ->buildSearchText(
+                        $normalized
+                    );
+
+            $documents[] = [
+
+                'import_id' =>
+                    $import->id,
+
+                'source_id' =>
+                    $import->source_id,
+
+                'source_name' =>
+                    $import->source->name,
+
+                'indexed_at' =>
+                    now()->toIso8601String(),
+
+                'chunk_number' =>
+                    $this->chunkNumber,
+
+                'full_text' =>
+                    $fullText,
+
+                'normalized_data' =>
+                    $normalized,
+
+                'original_data' =>
+                    $row,
+            ];
         }
+
+        $indexer->bulkIndex(
+            $documents
+        );
 
         $import->increment(
             'processed_chunks'
@@ -46,15 +100,43 @@ class ProcessImportChunkJob implements ShouldQueue
             count($this->rows)
         );
 
+        $import->refresh();
+
         if (
-            $import->processed_chunks + 1
-            >= $import->total_chunks
+            $import->processed_chunks >=
+            $import->total_chunks
         ) {
 
             $import->update([
-                'status' => 'completed',
-                'completed_at' => now()
+
+                'status' =>
+                    'completed',
+
+                'completed_at' =>
+                    now(),
             ]);
         }
+    }
+
+    public function failed(
+        Throwable $exception
+    ): void {
+
+        $import = Import::find(
+            $this->importId
+        );
+
+        if (! $import) {
+            return;
+        }
+
+        $import->update([
+
+            'status' =>
+                'failed',
+
+            'error_message' =>
+                $exception->getMessage(),
+        ]);
     }
 }

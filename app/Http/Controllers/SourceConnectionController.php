@@ -214,17 +214,50 @@ class SourceConnectionController extends Controller
 
         try {
 
+            $fields =
+                $service
+                    ->getFields(
+                        $source
+                    );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Guardar detección
+            |--------------------------------------------------------------------------
+            */
+
+            $source
+                ->detectedFields()
+                ->delete();
+
+            foreach ($fields as $field) {
+
+                $source
+                    ->detectedFields()
+                    ->create([
+
+                        'field_name' => $field,
+
+                        'data_type' => 'string'
+                    ]);
+            }
+
             return response()->json([
+
                 'success' => true,
-                'fields' => $service
-                    ->getFields($source)
+
+                'fields' => $fields
             ]);
 
         } catch (\Throwable $e) {
 
             return response()->json([
+
                 'success' => false,
-                'message' => $e->getMessage()
+
+                'message' =>
+                    $e->getMessage()
+
             ],500);
         }
     }

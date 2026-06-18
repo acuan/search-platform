@@ -44,7 +44,16 @@
             <span>Importaciones</span>
 
         </a>
+        <a
+            href="{{ route(
+                'sources.mappings.index',
+                $source
+            ) }}"
+            class="block px-4 py-2 rounded hover:bg-slate-800">
 
+            Mapeo de Campos
+
+        </a>
         {{-- Búsquedas --}}
         <a
             href="{{ route('search.index') }}"

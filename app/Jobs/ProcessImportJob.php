@@ -3,62 +3,115 @@
 namespace App\Jobs;
 
 use App\Models\Import;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 class ProcessImportJob implements ShouldQueue
 {
+    use Dispatchable;
+    use InteractsWithQueue;
     use Queueable;
+    use SerializesModels;
+
+    public int $timeout = 0;
+
+    public int $tries = 1;
+
+    protected int $chunkSize = 5000;
 
     public function __construct(
-        public Import $import
+        public int $importId
     ) {
     }
 
     public function handle(): void
     {
-        $this->import->update([
+        $import = Import::findOrFail(
+            $this->importId
+        );
+
+        $import->update([
             'status' => 'processing',
             'started_at' => now(),
+            'records_total' => 0,
+            'records_processed' => 0,
+            'processed_chunks' => 0,
+            'total_chunks' => 0,
+            'error_message' => null,
         ]);
 
-        $path = $this->import->storage_path;
+        $file = $import->storage_path;
 
-        $handle = fopen($path, 'r');
-
-        if (!$handle) {
+        if (! file_exists($file)) {
 
             throw new \Exception(
-                'No se pudo abrir el archivo'
+                "Archivo no encontrado: {$file}"
             );
         }
 
+        $handle = fopen($file, 'r');
+
+        if (! $handle) {
+
+            throw new \Exception(
+                "No se pudo abrir el archivo"
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Encabezados
+        |--------------------------------------------------------------------------
+        */
+
         $header = fgetcsv($handle);
+
+        if (! $header) {
+
+            throw new \Exception(
+                'El archivo no contiene encabezados'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Lectura por chunks
+        |--------------------------------------------------------------------------
+        */
 
         $chunk = [];
 
-        $chunkSize = 5000;
-
         $chunkNumber = 1;
 
-        $records = 0;
+        $recordsTotal = 0;
 
         while (($row = fgetcsv($handle)) !== false) {
+
+            if (
+                count($row)
+                !== count($header)
+            ) {
+                continue;
+            }
 
             $chunk[] = array_combine(
                 $header,
                 $row
             );
 
-            $records++;
+            $recordsTotal++;
 
             if (
                 count($chunk)
-                >= $chunkSize
+                >= $this->chunkSize
             ) {
 
                 ProcessImportChunkJob::dispatch(
-                    $this->import->id,
+                    $import->id,
                     $chunk,
                     $chunkNumber
                 );
@@ -69,10 +122,16 @@ class ProcessImportJob implements ShouldQueue
             }
         }
 
-        if (!empty($chunk)) {
+        /*
+        |--------------------------------------------------------------------------
+        | Último chunk
+        |--------------------------------------------------------------------------
+        */
+
+        if (! empty($chunk)) {
 
             ProcessImportChunkJob::dispatch(
-                $this->import->id,
+                $import->id,
                 $chunk,
                 $chunkNumber
             );
@@ -80,11 +139,42 @@ class ProcessImportJob implements ShouldQueue
 
         fclose($handle);
 
-        $this->import->update([
+        /*
+        |--------------------------------------------------------------------------
+        | Estadísticas
+        |--------------------------------------------------------------------------
+        */
 
-            'records_total' => $records,
+        $totalChunks = (int) ceil(
+            $recordsTotal / $this->chunkSize
+        );
 
-            'total_chunks' => $chunkNumber
+        $import->update([
+
+            'records_total' => $recordsTotal,
+
+            'total_chunks' => $totalChunks,
+        ]);
+    }
+
+    public function failed(
+        Throwable $exception
+    ): void {
+
+        $import = Import::find(
+            $this->importId
+        );
+
+        if (! $import) {
+            return;
+        }
+
+        $import->update([
+
+            'status' => 'failed',
+
+            'error_message' =>
+                $exception->getMessage(),
         ]);
     }
 }
